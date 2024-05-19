@@ -138,6 +138,55 @@ ORDER BY 1;
 UPDATE layoffs_staging_third
 SET company = TRIM(company);
 
--- checking industry column
+-- checking industry columns for any whitespaces and mispellings
 SELECT DISTINCT industry, TRIM(industry) FROM layoffs_staging_third
 ORDER BY 1;
+
+-- looking at crypto since there are three different value
+SELECT * FROM layoffs_staging_third
+WHERE industry LIKE '%Crypto%';
+
+-- let's update it
+UPDATE layoffs_staging_third
+SET industry = 'Crypto'
+WHERE industry LIKE '%Crypto%';
+
+-- check location column
+SELECT DISTINCT location, TRIM(location) FROM layoffs_staging_third;
+
+-- update it just to be sure
+UPDATE layoffs_staging_third
+SET location = TRIM(location);
+
+-- check stage
+SELECT DISTINCT stage, TRIM(stage) FROM layoffs_staging_third
+ORDER BY 1;
+
+-- update it just to be sureeeee
+UPDATE layoffs_staging_third
+SET stage = TRIM(stage);
+
+-- check country
+SELECT DISTINCT country, TRIM(TRAILING '.' FROM country) FROM layoffs_staging_third
+ORDER BY 1;
+
+-- update it
+UPDATE layoffs_staging_third
+SET country = TRIM(TRAILING '.' FROM country)
+WHERE country LIKE 'United States%';
+
+/*
+2b. time series standardization
+this one is kind of tricky, we need to do the str_to_date and the format is '%m/%d/%Y'
+*/
+
+SELECT `date`, STR_TO_DATE(`date`, '%m/%d/%Y')
+FROM layoffs_staging_third;
+
+-- update the date, i love the rhythm
+UPDATE layoffs_staging_third
+SET `date` = STR_TO_DATE(`date`, '%m/%d/%Y');
+
+-- alter the date column data type from text to date
+ALTER TABLE layoffs_staging_third
+MODIFY COLUMN `date` DATE;
