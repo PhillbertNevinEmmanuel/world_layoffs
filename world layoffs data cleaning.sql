@@ -20,7 +20,7 @@ The steps of data cleaning process after inspecting are:
     1.	Remove duplicates (if necessary)
     2.	Standardize the data
     3.	Check for null values and blank values (and decide whether to populate or to drop them)
-	4.	Remove any unused/irrelevant columns to speed your query process
+	4.	Remove any unused/irrelevant records and columns to speed the query process
 */
 
 /*
@@ -190,3 +190,87 @@ SET `date` = STR_TO_DATE(`date`, '%m/%d/%Y');
 -- alter the date column data type from text to date
 ALTER TABLE layoffs_staging_third
 MODIFY COLUMN `date` DATE;
+
+/*
+3. Check for null values and blank values
+we're going to check these values mostly on columns that has integer value,
+but it doesn't mean we're going to overlook the text columns
+*/
+
+-- initiating stage four
+CREATE TABLE `layoffs_staging_fourth` (
+  `company` text,
+  `location` text,
+  `industry` text,
+  `total_laid_off` bigint DEFAULT NULL,
+  `percentage_laid_off` text,
+  `date` date DEFAULT NULL,
+  `stage` text,
+  `country` text,
+  `funds_raised_millions` int DEFAULT NULL,
+  `row_num` int DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- insert third stage to fourth stage
+INSERT INTO layoffs_staging_fourth
+SELECT * FROM layoffs_staging_third;
+
+-- checking stage fourth
+SELECT * FROM layoffs_staging_fourth;
+
+-- checking total laid off and percentage laid off columns
+SELECT * FROM layoffs_staging_fourth
+WHERE total_laid_off IS NULL
+AND percentage_laid_off IS NULL;
+
+-- checking industry column for null values
+SELECT *
+FROM layoffs_staging_fourth
+WHERE industry IS NULL
+OR industry = '';
+
+-- there are 4 record where the industry is either null or has empty value
+-- let's see airbnb
+SELECT *
+FROM layoffs_staging_fourth
+WHERE company LIKE 'Airbnb%';
+
+-- we can populate each row faster using self-joins
+SELECT t1.industry, t2.industry
+FROM layoffs_staging_fourth t1
+JOIN layoffs_staging_fourth t2
+	ON t1.company = t2.company
+	AND t1.location = t2.location
+WHERE (t1.industry IS NULL OR t1.industry = '')
+AND t2.industry IS NOT NULL;
+
+-- before we populate, we need to change the empty values into null instead
+UPDATE layoffs_staging_fourth
+SET industry = NULL
+WHERE industry = '';
+
+-- let's populate those empty values
+UPDATE layoffs_staging_fourth t1
+JOIN layoffs_staging_fourth t2
+	ON t1.company = t2.company
+    AND t1.location = t2.location
+SET t1.industry = t2.industry
+WHERE t1.industry IS NULL
+AND t2.industry IS NOT NULL;
+
+-- alright, we need to check the values again
+SELECT *
+FROM layoffs_staging_fourth
+WHERE industry IS NULL
+OR industry = '';
+
+-- let's see into this bally's interactive
+SELECT * FROM layoffs_staging_fourth
+WHERE company LIKE 'Bally%'
+
+-- well, there's nothing we can do about it.
+
+/*
+4.	Remove any unused/irrelevant records and columns to speed our query process
+*/
+
