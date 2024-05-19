@@ -102,4 +102,42 @@ WHERE row_num > 1;
 
 /*
 2. Standardizing the data
+First maybe we need to check whitespaces in company names or industry names,
+we need to maybe create a checkpoint by making the third stage
 */
+
+-- creating the third staging table
+CREATE TABLE `layoffs_staging_third` (
+  `company` text,
+  `location` text,
+  `industry` text,
+  `total_laid_off` bigint DEFAULT NULL,
+  `percentage_laid_off` text,
+  `date` text,
+  `stage` text,
+  `country` text,
+  `funds_raised_millions` int DEFAULT NULL,
+  `row_num` INT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- check the third stage table, check again after inserting the data
+SELECT * FROM layoffs_staging_third;
+
+-- inserting the data
+INSERT INTO layoffs_staging_third
+SELECT * FROM layoffs_staging_second;
+
+-- checking whitespaces in company column, or any incorrect data
+SELECT DISTINCT company, TRIM(company) FROM layoffs_staging_third
+ORDER BY 1;
+
+SELECT company, TRIM(company) FROM layoffs_staging_third
+ORDER BY 1;
+
+-- update it
+UPDATE layoffs_staging_third
+SET company = TRIM(company);
+
+-- checking industry column
+SELECT DISTINCT industry, TRIM(industry) FROM layoffs_staging_third
+ORDER BY 1;
