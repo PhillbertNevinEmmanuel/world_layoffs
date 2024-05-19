@@ -266,7 +266,7 @@ OR industry = '';
 
 -- let's see into this bally's interactive
 SELECT * FROM layoffs_staging_fourth
-WHERE company LIKE 'Bally%'
+WHERE company LIKE 'Bally%';
 
 -- well, there's nothing we can do about it.
 
@@ -274,3 +274,51 @@ WHERE company LIKE 'Bally%'
 4.	Remove any unused/irrelevant records and columns to speed our query process
 */
 
+-- initiating stage fifth
+CREATE TABLE `layoffs_staging_fifth` (
+  `company` text,
+  `location` text,
+  `industry` text,
+  `total_laid_off` bigint DEFAULT NULL,
+  `percentage_laid_off` text,
+  `date` date DEFAULT NULL,
+  `stage` text,
+  `country` text,
+  `funds_raised_millions` int DEFAULT NULL,
+  `row_num` int DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- insert fourth stage to fifth stage
+INSERT INTO layoffs_staging_fifth
+SELECT * FROM layoffs_staging_fourth;
+
+-- checking stage fifth
+SELECT * FROM layoffs_staging_fifth;
+
+-- we need to check the records of total_laid_off and percentage_laid_off columns again
+SELECT * FROM layoffs_staging_fifth
+WHERE total_laid_off IS NULL
+AND percentage_laid_off IS NULL;
+
+-- delete it
+DELETE FROM layoffs_staging_fifth
+WHERE total_laid_off IS NULL
+AND percentage_laid_off IS NULL;
+
+-- delete the row num column as well
+ALTER TABLE layoffs_staging_fifth
+DROP COLUMN row_num;
+-- check it
+SELECT * FROM layoffs_staging_fifth;
+
+-- delete the bally's interactive too
+SELECT * FROM layoffs_staging_fifth
+WHERE company LIKE 'Bally%';
+
+DELETE FROM layoffs_staging_fifth
+WHERE company LIKE 'Bally%';
+
+SELECT * FROM layoffs_staging_fifth
+WHERE company LIKE 'Bally%';
+
+-- the data is clean!
