@@ -45,6 +45,11 @@ WHERE SUBSTRING(`date`, 1, 7) IS NOT NULL
 GROUP BY 1 ORDER BY 1;
 
 -- we want to create a rolling total of sum(total_laid_off), using over order by per month
+SELECT SUBSTRING(`date`, 1, 7) `month`, SUM(total_laid_off) total_minerva
+FROM layoffs_staging_fifth
+WHERE SUBSTRING(`date`, 1, 7) IS NOT NULL
+GROUP BY 1 ORDER BY 1;
+
 WITH rolling_total_cte AS(
 	SELECT SUBSTRING(`date`, 1, 7) `month`, SUM(total_laid_off) total_minerva
 	FROM layoffs_staging_fifth
@@ -65,3 +70,20 @@ SELECT `month`, country, total_minerva, SUM(total_minerva) OVER(ORDER BY `month`
 FROM rolling_total_cte
 WHERE total_minerva IS NOT NULL;
 
+-- we want to rank top 5 company that minerva'd their employees per year
+SELECT company, YEAR(`date`), SUM(total_laid_off)
+FROM layoffs_staging_fifth
+GROUP BY 1, 2
+ORDER BY 3 DESC;
+
+WITH company_yearly_minerva_cte (company, years, total_minerva) AS(
+	SELECT company, YEAR(`date`), SUM(total_laid_off)
+	FROM layoffs_staging_fifth
+	GROUP BY 1, 2
+), company_year_ranking_cte AS(
+	SELECT *, DENSE_RANK() OVER(PARTITION BY years ORDER BY total_minerva DESC) ranking
+	FROM company_yearly_minerva_cte
+	WHERE years IS NOT NULL
+)
+SELECT * FROM company_year_ranking_cte
+WHERE ranking <= 5;
